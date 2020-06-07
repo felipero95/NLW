@@ -1,13 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ImageBackground, Text, Image, StyleSheet, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Feather as Icon} from '@expo/vector-icons';
 import { RectButton } from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import RNPickerSelect from 'react-native-picker-select';
+
+interface IBGEUFResponse {
+  sigla: string;
+}
+
+interface Pick {
+  label: string;
+  value: string;
+}
 
 const Home = () => {
     const [uf, setUf] = useState('');
     const [city, setCity] = useState('');
+    const [ufs, setUfs] = useState<string[]>([]);
     const navigation = useNavigation();
+    const [picker, setPicker] = useState<Pick[]>([])
+
+    useEffect(() => {
+      axios.get<IBGEUFResponse[]>('https://servicodados.ibge.gov.br/api/v1/localidades/estados').then(response => {
+        
+        const ufInitials = response.data.map(uf => uf.sigla);
+        setUfs(ufInitials);
+      });
+    }, []);
+
+    useEffect(() => {
+      const pickInitial: Pick[] = ufs.map(uf => ({
+        label: uf,
+        value: uf,
+      }));
+
+      console.log(pickInitial);
+      setPicker(pickInitial);
+    }, []);
 
     function handleNavigateToPoints(){
         navigation.navigate('Points', {
@@ -32,7 +63,12 @@ const Home = () => {
                 </View>
 
                 <View style={styles.footer}>
-                    <TextInput
+                    <RNPickerSelect
+                      useNativeAndroidPickerStyle={false}
+                      onValueChange={(value) => console.log(value)}
+                      items={picker}
+                    />
+                    {/* <TextInput
                         style={styles.input}
                         placeholder="Digite a UF" 
                         value={uf}
@@ -40,7 +76,7 @@ const Home = () => {
                         autoCapitalize='characters'
                         autoCorrect={false}
                         onChangeText={setUf}
-                    />
+                    /> */}
 
                     <TextInput
                         style={styles.input}
